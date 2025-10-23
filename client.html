@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
+    
+    <style>
+        /* Estils Generals */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f0f2f5; }
+        .main-container { padding: 20px; }
+        h1, h2, h3 { color: #2c3e50; }
+
+        /* Estils del Catàleg */
+        .filter-container { background-color: #fff; padding: 15px 20px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        .filter-container label { font-weight: bold; }
+        .filter-container select, .filter-container input[type="text"] { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; margin-top: 20px; }
+        .grid-item { background-color: #ffffff; border: 1px solid #dfe6e9; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.07); text-align: center; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
+        .grid-item img {
+             width: 100%; height: 180px; object-fit: cover;
+             border-radius: 8px; margin-bottom: 15px;
+             background-color: #f0f2f5; 
+        }
+        .grid-item h3 { margin: 0 0 15px 0; font-size: 1.1em; }
+        .grid-item button { background-color: #7f8c8d; color: white; width: 100%; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; margin-top: 10px; }
+        .grid-item button:hover { background-color: #6c7a7d; }
+
+        /* === ESTILS PER ALS POPUPS === */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 25px; border: 1px solid #888; width: 90%; max-width: 800px; border-radius: 10px; position: relative; } 
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        .close-button { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .info-popup-content { max-height: 75vh; overflow-y: auto; padding-right: 15px; }
+        
+        /* Nivell 1: Tags */
+        .tag-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .tag { background-color: #e0e0e0; color: #333; padding: 5px 12px; border-radius: 16px; font-size: 13px; font-weight: 500; }
+        
+        /* Nivell 2: Layout Foto + Calendari */
+        .info-layout-media { display: flex; flex-direction: row; gap: 25px; margin-bottom: 20px; }
+        .info-photo-column { flex: 1; max-width: 300px; }
+        .info-calendar-column { flex: 1.5; text-align: center; border-left: 1px solid #eee; padding-left: 25px; }
+        
+        .info-popup-content img { width: 100%; height: auto; border-radius: 8px; background-color: #f0f2f5; }
+        
+        /* Estils per als títols H3 (només els que queden visibles) */
+        .info-popup-content h3 { font-size: 1.1em; color: #0984e3; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 20px; }
+        .info-calendar-column h3 { margin-top: 0; }
+        .calendar-title { text-align: right; border-bottom: none; margin-bottom: 10px; }
+        
+        .info-popup-content p { margin: 10px 0; color: #333; line-height: 1.6; }
+        .info-popup-content p.preserve-whitespace { white-space: pre-wrap; word-wrap: break-word; }
+        .info-popup-content a { color: #0984e3; text-decoration: none; } .info-popup-content a:hover { text-decoration: underline; }
+
+        /* Estils Desplegable (collapsible) */
+        .collapsible { 
+            background-color: #eee; color: #444; cursor: pointer; 
+            padding: 12px 18px; width: 100%; border: none; 
+            text-align: left; outline: none; font-size: 1.1em; /* Mida H3 */
+            font-weight: bold; margin-top: 15px; /* Reduït marge */
+            border-bottom: 1px solid #ccc; 
+            display: block; /* Assegura que ocupa tota la línia */
+        }
+        /* El primer desplegable no té marge superior */
+        .info-popup-content .collapsible:first-of-type { 
+             margin-top: 20px; 
+        } 
+        .collapsible:after { content: '+'; font-weight: bold; float: right; margin-left: 5px; }
+        .collapsible.active:after { content: "−"; }
+        .collapsible-content { 
+            padding: 15px 18px; display: none; overflow: hidden; 
+            background-color: #f9f9f9; border: 1px solid #eee; border-top: none; 
+        }
+        /* El contingut del desplegable no té marge superior/inferior extra */
+        .collapsible-content p { margin: 0; } 
+        
+        /* Estils Calendari */
+        #calendar-container { margin-top: 0; }
+        .pika-single.is-inline { position: relative; display: inline-block; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 0 !important; outline: none; }
+        .pika-table .is-disabled .pika-button { background-color: #fdd; color: #d00; font-weight: bold; }
+
+        /* Estils Formulari Reserva */
+        #reserveModal .modal-content { max-width: 600px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="date"], .form-group input[type="number"], .form-group textarea {
+            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; 
+        }
+        .form-group textarea { min-height: 80px; }
+        .form-buttons { margin-top: 20px; text-align: right; }
+        .form-buttons button { padding: 10px 15px; border-radius: 4px; border: none; cursor: pointer; margin-left: 10px; }
+        .form-buttons .submit-button { background-color: #27ae60; color: white; }
+        .form-buttons .submit-button:hover { background-color: #219150; }
+        .form-buttons .cancel-button { background-color: #e74c3c; color: white; }
+        .form-buttons .cancel-button:hover { background-color: #c0392b; }
+        
+        #successMessage { display: none; background-color: #dff0d8; color: #3c763d; border: 1px solid #d6e9c6; border-radius: 4px; padding: 15px; margin-top: 20px; text-align: center; }
+        
+        .spinner { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #3498db; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+        
+        @media (max-width: 600px) {
+            .info-layout-media { flex-direction: column; gap: 15px; }
+            .info-photo-column { max-width: 100%; flex: initial; }
+            .info-calendar-column { text-align: left; flex: initial; border-left: none; padding-left: 0; }
+        }
+
+        /* Botó reiniciar filtres */
+        .reset-button { background-color: #bdc3c7; color: #2c3e50; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; margin-left: 10px; }
+        .reset-button:hover { background-color: #95a5a6; }
+        .search-group { margin-left: auto; }
+        @media (max-width: 768px) {
+           .search-group { margin-left: 0; }
+           .reset-button { margin-left: 0; margin-top: 10px; }
+        }
+        /* Botó sol·licitar préstec */
+        .request-button { display: block; width: 100%; background-color: #3498db; color: white; padding: 12px; margin-top: 25px; margin-bottom: 10px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .request-button:hover { background-color: #2980b9; }
+
+    </style>
+</head>
+<body>
+    <div class="main-container">
+            <div class="filter-container">
+            <div class="filter-group"><label for="ambitFilter">Àmbit:</label><select id="ambitFilter"><option value="tots">Tots</option></select></div>
+            <div class="filter-group"><label for="etapaFilter">Etapa:</label><select id="etapaFilter"><option value="tots">Totes</option></select></div>
+            <div class="filter-group">
+                <label for="tipusFilter">Tipus:</label><select id="tipusFilter"><option value="tots">Tots</option></select>
+                <button id="resetButton" class="reset-button">Reinicia Filtres</button>
+            </div>
+            <div class="filter-group search-group"><label for="searchBox">Cerca per nom:</label><input type="text" id="searchBox" placeholder="Escriu un nom..."></div>
+        </div>
+        <div id="grid-container" class="grid-container"></div>
+    </div>
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="infoModalTitle"></h2>
+                <span id="closeInfoModal" class="close-button">&times;</span>
+            </div>
+            <div id="infoModalContent" class="info-popup-content"></div>
+            <div id="successMessage">La vostra sol·licitud s'ha enregistrat correctament. Rebreu un correu de confirmació un cop validem la reserva.</div>
+            <div id="loadingSpinnerInfo" class="spinner"></div>
+        </div>
+    </div>
+    
+    <div id="reserveModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Sol·licitud de préstec</h2>
+                <span id="closeReserveModal" class="close-button">&times;</span>
+            </div>
+            <form id="reservationForm">
+                <input type="hidden" id="reserveResourceName" name="resourceName">
+                <div class="form-group"><label for="reserveName">Nom i cognom de la persona responsable:</label><input type="text" id="reserveName" name="name" required></div>
+                <div class="form-group"><label for="reserveEmail">Adreça electrònica:</label><input type="email" id="reserveEmail" name="email" required></div>
+                <div class="form-group"><label for="reserveSchool">Centre educatiu:</label><input type="text" id="reserveSchool" name="school" required></div>
+                <div class="form-group"><label for="reserveMunicipality">Municipi:</label><input type="text" id="reserveMunicipality" name="municipality" required></div>
+                <div class="form-group"><label for="reserveStartDate">Data inici préstec:</label><input type="date" id="reserveStartDate" name="startDate" required></div>
+                <div class="form-group"><label for="reserveEndDate">Data final préstec:</label><input type="date" id="reserveEndDate" name="endDate" required></div>
+                <div class="form-group"><label for="reserveStudents">Nombre d'alumnes que en faran ús:</label><input type="number" id="reserveStudents" name="students" min="1"></div>
+                <div class="form-group"><label for="reserveObservations">Altres observacions:</label><textarea id="reserveObservations" name="observations"></textarea></div>
+                <div class="form-buttons">
+                    <button type="button" class="cancel-button" id="cancelReserveButton">Cancel·la</button>
+                    <button type="submit" class="submit-button">Envia sol·licitud</button>
+                </div>
+            </form>
+            <div id="loadingSpinnerReserve" class="spinner"></div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
+
+<script>
+    // === VARIABLES GLOBALS ===
+    let totsElsRecursos = [];
+    let catalegCarregat = false;
+    let allReservations = {};
+    let reservationsLoaded = false;
+    let currentPikadayInstance = null;
+    
+    const placeholderImg = "https://via.assets.so/400x300.png?text=Sense+Imatge";
+
+    // Referències DOM
+    const filtreAmbit = document.getElementById('ambitFilter');
+    const filtreEtapa = document.getElementById('etapaFilter');
+    const filtreTipus = document.getElementById('tipusFilter');
+    const searchInput = document.getElementById('searchBox');
+    const grid = document.getElementById("grid-container");
+    const resetButton = document.getElementById('resetButton');
+    const reserveModal = document.getElementById('reserveModal');
+    const closeReserveModalBtn = document.getElementById('closeReserveModal');
+    const cancelReserveBtn = document.getElementById('cancelReserveButton');
+    const reservationForm = document.getElementById('reservationForm');
+    const successMessageDiv = document.getElementById('successMessage');
+    const loadingSpinnerInfo = document.getElementById('loadingSpinnerInfo');
+    const loadingSpinnerReserve = document.getElementById('loadingSpinnerReserve');
+
+    // === INICIALITZACIÓ ===
+    document.addEventListener("DOMContentLoaded", function() {
+        carregarDadesCataleg();
+        carregarDadesReserves(); 
+        
+        filtreAmbit.addEventListener('change', renderGrid);
+        filtreEtapa.addEventListener('change', renderGrid);
+        filtreTipus.addEventListener('change', renderGrid);
+        searchInput.addEventListener('input', renderGrid);
+        resetButton.addEventListener('click', resetFilters);
+        configurarPopupInfo();
+        configurarPopupReserva(); 
+
+        grid.addEventListener('click', function(event) {
+            const button = event.target.closest('.info-button');
+            if (button) {
+                const materialName = button.dataset.materialName;
+                if (materialName) {
+                    obrirPopupInfo(materialName);
+                }
+            }
+        });
+    });
+
+    // === LÒGICA DEL CATÀLEG ===
+    function carregarDadesCataleg() { /* ... (igual) ... */ 
+        console.log("Iniciant càrrega optimitzada...");
+        google.script.run.withSuccessHandler(function(data) {
+            console.log("Dades rebudes:", data);
+            (data.ambits || []).forEach(ambit => { const option = document.createElement('option'); option.value = ambit; option.textContent = ambit; filtreAmbit.appendChild(option); });
+            (data.etapes || []).forEach(etapa => { const option = document.createElement('option'); option.value = etapa; option.textContent = etapa; filtreEtapa.appendChild(option); });
+            (data.tipusRecursos || []).forEach(tipus => { const option = document.createElement('option'); option.value = tipus; option.textContent = tipus; filtreTipus.appendChild(option); });
+            totsElsRecursos = data.resources || [];
+            catalegCarregat = true;
+            renderGrid();
+            console.log("Càrrega optimitzada completada.");
+        }).getCatalogData();
+    }
+    
+    // === CÀRREGA DE RESERVES ===
+    function carregarDadesReserves() { /* ... (igual) ... */
+        console.log("Iniciant càrrega de reserves...");
+        google.script.run.withSuccessHandler(function(data) {
+            allReservations = data;
+            reservationsLoaded = true;
+            console.log("Càrrega de reserves completada.", allReservations);
+             if (currentPikadayInstance) {
+                 const currentResource = document.getElementById('infoModalTitle').innerText;
+                 actualitzarCalendari(currentResource);
+             }
+        }).getReservationData();
+    }
+
+    function escapeHtml(unsafe) { /* ... (igual) ... */
+        if (!unsafe) return '';
+        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+     }
+
+    function renderGrid() { /* ... (igual) ... */
+        if (!catalegCarregat) return;
+        const ambit = filtreAmbit.value, etapa = filtreEtapa.value, tipus = filtreTipus.value;
+        const cerca = searchInput.value.toLowerCase().trim();
+        grid.innerHTML = "";
+        const recursosFiltrats = totsElsRecursos.filter(r => {
+            const ambitRecurs = r[3] || '', etapaRecurs = r[4] || '', tipusRecurs = r[8] || '', nomRecurs = r[1] || '';
+            return ((ambit === 'tots' || ambitRecurs.includes(ambit)) && (etapa === 'tots' || etapaRecurs.includes(etapa)) && (tipus === 'tots' || tipusRecurs.includes(tipus)) && (nomRecurs.toLowerCase().includes(cerca)));
+        });
+        if (recursosFiltrats.length === 0) { grid.innerHTML = "<p>No s'han trobat recursos amb aquests criteris.</p>"; } 
+        else { recursosFiltrats.forEach(r => { const resourceName = r[1], imageUrl = r[6]; const item = document.createElement('div'); item.className = 'grid-item'; item.innerHTML = `<img src="${imageUrl || placeholderImg}" alt="${escapeHtml(resourceName || 'Recurs')}"><h3>${resourceName || "Nom no disponible"}</h3><button class="info-button" data-material-name="${escapeHtml(resourceName || '')}">Informació</button>`; grid.appendChild(item); }); }
+    }
+
+    // === LÒGICA POPUP INFO ===
+    function configurarPopupInfo() { /* ... (igual) ... */
+        const modal = document.getElementById('infoModal');
+        const closeModalBtn = document.getElementById('closeInfoModal');
+        closeModalBtn.onclick = () => { modal.style.display = 'none'; successMessageDiv.style.display = 'none'; if (currentPikadayInstance) { currentPikadayInstance.destroy(); currentPikadayInstance = null; } }
+        window.onclick = event => { if (event.target == modal) { modal.style.display = 'none'; successMessageDiv.style.display = 'none'; if (currentPikadayInstance) { currentPikadayInstance.destroy(); currentPikadayInstance = null; } } };
+    }
+
+    function obrirPopupInfo(materialName) {
+        const recurs = totsElsRecursos.find(r => r[1] == materialName);
+        if (!recurs) { alert("No s'ha pogut trobar la informació d'aquest recurs."); return; }
+        const modal = document.getElementById('infoModal');
+        const title = document.getElementById('infoModalTitle');
+        const content = document.getElementById('infoModalContent');
+        const imageUrl = recurs[6], descripcio = recurs[2], contingut = recurs[5];
+        const ambit = recurs[3], etapa = recurs[4], tipus = recurs[8], enllac = recurs[7];
+        title.innerText = recurs[1] || "Detalls del Recurs";
+        const ambitTag = ambit ? `<span class="tag">${ambit}</span>` : '', etapaTag = etapa ? `<span class="tag">${etapa}</span>` : '', tipusTag = tipus ? `<span class="tag">${tipus}</span>` : '';
+
+        // *** ESTRUCTURA HTML AMB TOTS ELS DESPLEGABLES ***
+        content.innerHTML = `
+            <div class="tag-container"> ${ambitTag} ${etapaTag} ${tipusTag} </div>
+
+            <div class="info-layout-media">
+                <div class="info-photo-column"> <img src="${imageUrl || placeholderImg}" alt="${escapeHtml(recurs[1] || '')}"> </div>
+                <div class="info-calendar-column">
+                    <h3 class="calendar-title">Disponibilitat</h3>
+                    <div id="calendar-container"></div>
+                    <button id="openReserveFormButton" class="request-button">Sol·licitud de Préstec</button> 
+                </div>
+            </div>
+            
+            <button class="collapsible">Descripció</button>
+            <div class="collapsible-content">
+                 <p>${descripcio || "No hi ha descripció."}</p>
+            </div>
+            
+            <button class="collapsible">Contingut del recurs</button>
+            <div class="collapsible-content">
+                 <p class="preserve-whitespace">${contingut || "No s'ha especificat el contingut."}</p>
+            </div>
+            
+            <button class="collapsible">Enllaços d'interès</button>
+            <div class="collapsible-content">
+                 <p><a href="${enllac}" target="_blank">${enllac || "No n'hi ha."}</a></p>
+            </div>
+        `;
+        // **************************************************
+        
+        modal.style.display = 'block';
+        successMessageDiv.style.display = 'none'; 
+        
+        inicialitzarCalendari(materialName);
+        
+        // --- INICIALITZAR TOTS ELS DESPLEGABLES ---
+        const collapsibles = content.getElementsByClassName("collapsible");
+        for (let i = 0; i < collapsibles.length; i++) { 
+             collapsibles[i].addEventListener("click", function() { 
+                this.classList.toggle("active"); 
+                const contentPanel = this.nextElementSibling; 
+                if (contentPanel.style.display === "block") { 
+                    contentPanel.style.display = "none"; 
+                } else { 
+                    contentPanel.style.display = "block"; 
+                } 
+            }); 
+        }
+
+        document.getElementById('openReserveFormButton').addEventListener('click', function() { document.getElementById('reserveResourceName').value = materialName; reserveModal.style.display = 'block'; });
+    }
+    
+    // === INICIALITZAR/ACTUALITZAR CALENDARI ===
+    function inicialitzarCalendari(resourceName) { /* ... (igual) ... */
+         const calendarContainer = document.getElementById('calendar-container');
+         if (!calendarContainer) return; 
+         if (currentPikadayInstance) { currentPikadayInstance.destroy(); }
+         if (reservationsLoaded) {
+            const resourceBookings = allReservations[resourceName] || [];
+            const isDateDisabled = function(date) { const checkTime = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime(); for (const booking of resourceBookings) { const startParts = booking.start.split('-'); const endParts = booking.end.split('-'); const startTime = new Date(startParts[0], startParts[1] - 1, startParts[2]).getTime(); const endTime = new Date(endParts[0], endParts[1] - 1, endParts[2]).getTime(); if (checkTime >= startTime && checkTime <= endTime) { return true; } } return false; };
+            currentPikadayInstance = new Pikaday({ field: calendarContainer, bound: false, format: 'YYYY-MM-DD', i18n: { previousMonth : 'Mes Anterior', nextMonth : 'Mes Següent', months : ['Gener','Febrer','Març','Abril','Maig','Juny','Juliol','Agost','Setembre','Octubre','Novembre','Desembre'], weekdays : ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'], weekdaysShort : ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'] }, firstDay: 1, disableDayFn: isDateDisabled });
+        } else { calendarContainer.innerHTML = "<p>Carregant dades de disponibilitat...</p>"; }
+    }
+     // === ACTUALITZAR CALENDARI DESPRÉS DE RESERVAR ===
+     function actualitzarCalendari(resourceName) { /* ... (igual) ... */
+         if (document.getElementById('infoModal').style.display === 'block' && document.getElementById('infoModalTitle').innerText === resourceName) { console.log("Actualitzant calendari per a:", resourceName); inicialitzarCalendari(resourceName); } 
+         else { console.log("Popup no obert o recurs diferent, no s'actualitza calendari."); }
+     }
+
+    // === LÒGICA POPUP RESERVA ===
+    function configurarPopupReserva() { /* ... (igual) ... */
+        closeReserveModalBtn.onclick = () => reserveModal.style.display = 'none';
+        cancelReserveBtn.onclick = () => reserveModal.style.display = 'none';
+        window.onclick = event => { if (event.target == reserveModal) reserveModal.style.display = 'none'; };
+
+        reservationForm.addEventListener('submit', function(event) {
+            event.preventDefault(); 
+            loadingSpinnerReserve.style.display = 'block'; 
+            const formData = { name: document.getElementById('reserveName').value, email: document.getElementById('reserveEmail').value, school: document.getElementById('reserveSchool').value, municipality: document.getElementById('reserveMunicipality').value, startDate: document.getElementById('reserveStartDate').value, endDate: document.getElementById('reserveEndDate').value, students: document.getElementById('reserveStudents').value, observations: document.getElementById('reserveObservations').value };
+            const resourceName = document.getElementById('reserveResourceName').value;
+            if (new Date(formData.endDate) < new Date(formData.startDate)) { alert("La data final no pot ser anterior a la data d'inici."); loadingSpinnerReserve.style.display = 'none'; return; }
+
+            google.script.run
+                .withSuccessHandler(function(response) { 
+                    loadingSpinnerReserve.style.display = 'none'; 
+                    if (response === true) { reserveModal.style.display = 'none'; reservationForm.reset(); successMessageDiv.style.display = 'block'; reservationsLoaded = false; carregarDadesReserves(); } 
+                    else if (response === "CONFLICT") { alert("Les dates seleccionades ja estan ocupades o se solapen amb una reserva existent. Si us plau, tria'n unes altres."); } 
+                    else { alert("Hi ha hagut un error en desar la sol·licitud. Si us plau, torna-ho a provar."); }
+                })
+                .withFailureHandler(function(error) { loadingSpinnerReserve.style.display = 'none'; console.error("Error en enviar la reserva: ", error); alert("Error de connexió en enviar la sol·licitud. Si us plau, comprova la teva connexió i torna-ho a provar."); })
+                .addReservation(formData, resourceName);
+        });
+    }
+
+    // === FUNCIÓ PER REINICIAR FILTRES ===
+    function resetFilters() { /* ... (igual) ... */
+        filtreAmbit.value = 'tots';
+        filtreEtapa.value = 'tots';
+        filtreTipus.value = 'tots';
+        searchInput.value = '';
+        renderGrid();
+    }
+</script>
+</body>
+</html>
