@@ -159,7 +159,7 @@ function getReservationData() {
  * @returns {boolean|string} True si èxit, false si error, "CONFLICT" si dates ocupades.
  */
 function addReservation(formData, resourceName) {
-  const recipientEmail = "a8930013@xtec.cat"; // Email per a notificacions
+  const recipientEmail = "correu@contacte.aquí"; // Email per a notificacions (cal modificar)
 
   try {
     // --- PAS 1: Comprovar Conflictes ---
@@ -257,4 +257,5 @@ function addReservation(formData, resourceName) {
     console.error("Error crític a addReservation: " + e.toString());
     return false; 
   }
+
 }
