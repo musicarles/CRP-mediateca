@@ -1,7 +1,9 @@
 CATÀLEG INTERACTIU DE RECURSOS AMB RESERVES
 ------------------------------------------------------------
 Aplicació web amb Google Apps Script per gestionar préstecs
-de materials educatius de manera senzilla i centralitzada.
+de materials dels CRPs de manera senzilla i centralitzada.
+Permet implementar-ho de manera senzilla al Nodes del
+Servei Educatiu.
 
 ------------------------------------------------------------
 CARACTERÍSTIQUES PRINCIPALS
