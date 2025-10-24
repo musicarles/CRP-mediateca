@@ -25,40 +25,40 @@ CONFIGURACIÓ DEL PROJECTE
 Cal crear tres fulls dins del mateix fitxer:
 
 FULL 1: "Recursos"
-|  A - ID (opcional)
-|  B - Nom del recurs (obligatori i únic)
-|  C - Descripció
-|  D - Àmbit (valors separats per comes)
-|  E - Etapa (valors separats per comes)
-|  F - Contingut del recurs
-|  G - URL de la imatge
-|  H - Enllaç d’interès
-|  I - Tipus de recurs
+-  A - ID (opcional)
+-  B - Nom del recurs (obligatori i únic)
+-  C - Descripció
+-  D - Àmbit (valors separats per comes)
+-  E - Etapa (valors separats per comes)
+-  F - Contingut del recurs
+-  G - URL de la imatge
+-  H - Enllaç d’interès
+-  I - Tipus de recurs
 
 FULL 2: "Respostes al formulari 1"
-|  A - Marca de temps (automàtic)
-|  B - Nom i cognoms del responsable
-|  C - Correu electrònic
-|  D - Centre educatiu
-|  E - Municipi
-|  F - Material sol·licitat
-|  G - (buit)
-|  H - Data inici préstec (DD/MM/AAAA)
-|  I - Data final préstec (DD/MM/AAAA)
-|  J - Nombre d’alumnes
-|  K - Altres observacions
+-  A - Marca de temps (automàtic)
+-  B - Nom i cognoms del responsable
+-  C - Correu electrònic
+-  D - Centre educatiu
+-  E - Municipi
+-  F - Material sol·licitat
+-  G - (buit)
+-  H - Data inici préstec (DD/MM/AAAA)
+-  I - Data final préstec (DD/MM/AAAA)
+-  J - Nombre d’alumnes
+-  K - Altres observacions
 
 FULL 3: "Seguiment"
-|  A - Persona de contacte
-|  B - Correu electrònic
-|  C - Préstec
-|  D - (buit o ús intern)
-|  E - S’ha escrit correu?
-|  F - Data inici
-|  G - L’ha vingut a buscar?
-|  H - L’ha tornat?
-|  I - Data retorn
-|  J - Observacions
+-  A - Persona de contacte
+-  B - Correu electrònic
+-  C - Préstec
+-  D - (buit o ús intern)
+-  E - S’ha escrit correu?
+-  F - Data inici
+-  G - L’ha vingut a buscar?
+-  H - L’ha tornat?
+-  I - Data retorn
+-  J - Observacions
 
 Si canvies els noms dels fulls, cal modificar-los també al fitxer Codi.gs.
 
