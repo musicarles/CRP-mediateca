@@ -22,6 +22,9 @@ CARACTERÍSTIQUES PRINCIPALS
 CONFIGURACIÓ DEL PROJECTE
 ------------------------------------------------------------
 
+Podeu descarregar el fitxer "plantilla - gestió mediateca.ods"
+amb l'estructura i les fórmules creades.
+
 1. CREAR ELS FULLS DE GOOGLE SHEETS
 -----------------------------------
 Cal crear tres fulls dins del mateix fitxer:
